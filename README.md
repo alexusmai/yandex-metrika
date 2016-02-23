@@ -1,32 +1,34 @@
 # Yandex Metrika Laravel 5 Package
 
-[![Latest Version on Packagist][ico-version]][link-packagist]
-[![Software License][ico-license]](LICENSE.md)
-[![Total Downloads][ico-downloads]][link-downloads]
+[![Latest Version](https://img.shields.io/github/release/alexusmai/yandex-metrika.svg?style=flat-square)](https://github.com/alexusmai/yandex-metrika/releases)
+[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
+[![Total Downloads](https://img.shields.io/packagist/dt/alexusmai/yandex-metrika.svg?style=flat-square)](https://packagist.org/packages/alexusmai/yandex-metrika)
+
+Пакет предназначен для получения данных статистики Яндекс Метрики.
 
 ## Установка
 
 С помощью Composer
 
-```
+``` bash
 composer require alexusmai/yandex-metrika
 ```
 
 Добавить сервис провайдер в app/config/app.php
 
-```
+``` php
 Alexusmai\YandexMetrika\YandexMetrikaServiceProvider::class,
 ```
 
 Добавить алиас
 
-```
+``` php
 'YandexMetrika' => Alexusmai\YandexMetrika\YandexMetrikaFacade::class,
 ```
 
 Публикуем файл настроек
 
-```
+``` php
 php artisan vendor:publish --provider="Alexusmai\YandexMetrika\YandexMetrikaServiceProvider" --tag="yandex-metrika"
 ```
 
@@ -65,7 +67,7 @@ https://oauth.yandex.ru/authorize?response_type=token&client_id=подстави
 
 ### Получаем кол-во: визитов, просмотров, уникальных посетителей по дням
 
-```php
+``` php
 YandexMetrika::getVisitsViewsUsers();   //По умолчанию - за последние 30 дней
 //Пример
 YandexMetrika::getVisitsViewsUsers(10); //За последние 10 дней
@@ -75,7 +77,7 @@ YandexMetrika::getVisitsViewsUsersForPeriod(DateTime $startDate, DateTime $endDa
 
 ### Самые просматриваемые страницы
 
-```
+``` php
 YandexMetrika::getTopPageViews();       //По умолчанию за последние 30 дней, количество результатов - 10
 //Пример
 YandexMetrika::getTopPageViews(10, 50); //За последние 10 дней, максимум 50 результатов
@@ -85,7 +87,7 @@ YandexMetrika::getTopPageViewsForPeriod(DateTime $startDate, DateTime $endDate, 
 
 ### Отчет "Источники - Сводка"
 
-```
+``` php
 YandexMetrika::getSourceSummary();      //По умолчанию за последние 30 дней
 //Пример
 YandexMetrika::getSourceSummary(7);     //За последние 10 дней
@@ -95,7 +97,7 @@ YandexMetrika::getSourcesSummaryForPeriod(DateTime $startDate, DateTime $endDate
 
 ### Отчет "Источники - Поисковые фразы"
 
-```
+``` php
 YandexMetrika::getSourcesSearchPhrases();       //По умолчанию за последние 30 дней, количество результатов - 10
 //Пример
 YandexMetrika::getSourcesSearchPhrases(15, 20); //За последние 15 дней, максимум 20 результатов
@@ -105,7 +107,7 @@ YandexMetrika::getSourcesSearchPhrasesForPeriod(DateTime $startDate, DateTime $e
 
 ###  Отчет "Технологии - Браузеры"
 
-```
+``` php
 YandexMetrika::getTechPlatforms();      //По умолчанию за последние 30 дней, макс количество результатов - 10
 //Пример
 YandexMetrika::getTechPlatforms(12, 5); //За последние 12 дней, максимум 5 результатов
@@ -115,7 +117,7 @@ YandexMetrika::getTechPlatformsForPeriod(DateTime $startDate, DateTime $endDate,
 
 ### Количество визитов и посетителей с учетом поисковых систем
 
-```
+``` php
 YandexMetrika::getVisitsUsersSearchEngine();    //По умолчанию за последние 30 дней, макс количество результатов - 10
 //Пример
 YandexMetrika::getVisitsUsersSearchEngine(24, 60);  //За последние 24 дня, максимум 60 результатов
@@ -125,7 +127,7 @@ YandexMetrika::getVisitsUsersSearchEngineForPeriod(DateTime $startDate, DateTime
 
 ### Количество визитов с заданной глубиной просмотра
 
-```
+``` php
 YandexMetrika::getVisitsViewsPageDepth();   //По умолчанию за последние 30 дней, количество просмотренных страниц - 5
 //Пример
 YandexMetrika::getVisitsViewsPageDepth(7, 3);   //За последние 7 дней, количество просмотренных страниц - 3
@@ -137,7 +139,7 @@ YandexMetrika::getVisitsViewsPageDepthForPeriod(DateTime $startDate, DateTime $e
 
 Внимание! В данном случае id счетчика и token, не подставляются из файла конфигурации, а указываются вручную в параметрах запроса!!!
 
-```
+``` php
 getRequestToApi(array $urlParams, $urlApi)
 //Пример
 //Параметры запроса
@@ -154,11 +156,3 @@ $url ='stat/v1/data?';
 //Запрос
 YandexMetrika::getRequestToApi($urlParams, $url);
 ```
-
-[ico-version]: https://img.shields.io/packagist/v/alexusmai/yandex-metrika.svg?style=flat-square
-[ico-license]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
-[ico-downloads]: https://img.shields.io/packagist/dt/alexusmai/yandex-metrika.svg?style=flat-square
-
-[link-packagist]: https://packagist.org/packages/alexusmai/yandex-metrika
-[link-downloads]: https://packagist.org/packages/alexusmai/yandex-metrika
-[link-author]: https://github.com/alexusmai

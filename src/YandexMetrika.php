@@ -7,6 +7,9 @@ use GuzzleHttp\Exception\ClientException;
 
 class YandexMetrika
 {
+
+    use DataPreparation;
+
     /**
      * URL Yandex Metriki
      * @var string
@@ -31,6 +34,12 @@ class YandexMetrika
      */
     protected $cache;
 
+    /**
+     * Данные
+     * @var
+     */
+    public $data;
+
 
     /**
      * YandexMetrika constructor.
@@ -47,7 +56,7 @@ class YandexMetrika
      * Получаем кол-во: визитов, просмотров, уникальных посетителей по дням,
      * за выбранное кол-во дней
      * @param int $days
-     * @return \Illuminate\Support\Collection
+     * @return YandexMetrika
      */
     public function getVisitsViewsUsers($days = 30)
     {
@@ -64,13 +73,10 @@ class YandexMetrika
      * за выбранный период
      * @param DateTime $startDate
      * @param DateTime $endDate
-     * @return \Illuminate\Support\Collection
+     * @return $this
      */
     public function getVisitsViewsUsersForPeriod(DateTime $startDate, DateTime $endDate)
     {
-        //на выход
-        $data = [];
-
         $cacheName = md5(serialize('visits-views-users'.$startDate->format('Y-m-d').$endDate->format('Y-m-d')));
 
         //Параметры запроса
@@ -87,34 +93,18 @@ class YandexMetrika
         //Формируем url для запроса
         $requestUrl = $this->url.'stat/v1/data?'.urldecode(http_build_query($urlParams));
 
-        //Запрос данных
-        $requestData = $this->request($requestUrl, $cacheName);
+        //Запрос данных - возвращает массив или false,если данные не получены
+        $this->data = $this->request($requestUrl, $cacheName);
 
-        //Если данные получены, заполняем массив
-        if( $requestData )
-        {
-            //Формируем массив
-            foreach($requestData['data'] as $item)
-            {
-                $data[] = [
-                    'date'      => Carbon::createFromFormat('Y-m-d', $item['dimensions'][0]['name']),
-                    'visits'    => $item['metrics'][0],
-                    'pageviews' => $item['metrics'][1],
-                    'users'     => $item['metrics'][2]
-                ];
-            }
-        }
-
-        //отдаем коллекцию
-        return collect($data);
+        return $this;
     }
 
 
     /**----------------------------------------------------------------------
      * Самые просматриваемые страницы за $days, количество - $maxResult
-     * @param $days
-     * @param $maxResult
-     * @return \Illuminate\Support\Collection
+     * @param int $days
+     * @param int $maxResults
+     * @return YandexMetrika
      */
     public function getTopPageViews($days = 30, $maxResults = 10)
     {
@@ -131,13 +121,12 @@ class YandexMetrika
      * @param DateTime $startDate
      * @param DateTime $endDate
      * @param int $maxResults
-     * @return \Illuminate\Support\Collection
+     * @return $this
      */
     public function getTopPageViewsForPeriod(DateTime $startDate, DateTime $endDate, $maxResults = 10)
     {
-        $data = [];
 
-        $cacheName = md5(serialize('top-pages-views'.$startDate->format('Y-m-d').$endDate->format('Y-m-d')));
+        $cacheName = md5(serialize('top-pages-views'.$startDate->format('Y-m-d').$endDate->format('Y-m-d').$maxResults));
 
         //Параметры запроса
         $urlParams = [
@@ -155,25 +144,10 @@ class YandexMetrika
         //Формируем url для запроса
         $requestUrl = $this->url.'stat/v1/data?'.urldecode(http_build_query($urlParams));
 
-        //Запрос данных
-        $requestData = $this->request($requestUrl, $cacheName);
+        //Запрос данных - возвращает массив или false,если данные не получены
+        $this->data = $this->request($requestUrl, $cacheName);
 
-        //Если данные получены, заполняем массив
-        if( $requestData )
-        {
-            //Формируем массив
-            foreach($requestData['data'] as $item)
-            {
-                $data[] = [
-                    'url'       => $item['dimensions'][0]['name'],
-                    'title'     => $item['dimensions'][1]['name'],
-                    'pageviews' => $item['metrics'][0]
-                ];
-            }
-        }
-
-        //отдаем коллекцию
-        return collect($data);
+        return $this;
 
     }
 
@@ -181,7 +155,7 @@ class YandexMetrika
     /**----------------------------------------------------------------------
      * Отчет "Источники - Сводка" за последние $days дней
      * @param int $days
-     * @return \Illuminate\Support\Collection
+     * @return YandexMetrika
      */
     public function getSourcesSummary($days = 30)
     {
@@ -196,12 +170,10 @@ class YandexMetrika
      * Отчет "Источники - Сводка" за период
      * @param DateTime $startDate
      * @param DateTime $endDate
-     * @return \Illuminate\Support\Collection
+     * @return $this
      */
     public function getSourcesSummaryForPeriod(DateTime $startDate, DateTime $endDate)
     {
-        $data = [];
-        $totals = [];
         $cacheName = md5(serialize('sources-summary'.$startDate->format('Y-m-d').$endDate->format('Y-m-d')));
 
         //Параметры запроса
@@ -217,36 +189,10 @@ class YandexMetrika
         //Формируем url для запроса
         $requestUrl = $this->url.'stat/v1/data?'.urldecode(http_build_query($urlParams));
 
-        //Запрос данных
-        $requestData = $this->request($requestUrl, $cacheName);
+        //Запрос данных - возвращает массив или false,если данные не получены
+        $this->data = $this->request($requestUrl, $cacheName);
 
-        //Если данные получены, заполняем массив
-        if( $requestData )
-        {
-            //Формируем массив
-            foreach($requestData['data'] as $item)
-            {
-                $data[] = [
-                    'trafficSource' => $item['dimensions'][0]['name'],
-                    'sourceEngine'  => $item['dimensions'][1]['name'],
-                    'visits'        => $item['metrics'][0],             //Визиты
-                    'bounceRate'    => $item['metrics'][1],             //Отказы %
-                    'pageDepth'     => $item['metrics'][2],             //Глубина просмотра
-                    'avgVisitDurationSeconds'    => date("i:s", $item['metrics'][3]) //Время проведенное на сайте мин:сек.
-                ];
-            }
-
-            //Итого и средние значения
-            $totals = [
-                'visits'        => $requestData['totals'][0],
-                'bounceRate'    => $requestData['totals'][1],
-                'pageDepth'     => $requestData['totals'][2],
-                'avgVisitDurationSeconds'    => date("i:s", $requestData['totals'][3])
-            ];
-        }
-
-        //отдаем коллекцию
-        return collect(['data' => $data, 'totals' => $totals]);
+        return $this;
     }
 
 
@@ -254,7 +200,7 @@ class YandexMetrika
      * Отчет "Источники - Поисковые фразы" за $days дней, кол-во результатов - $maxResult
      * @param int $days
      * @param int $maxResult
-     * @return \Illuminate\Support\Collection
+     * @return YandexMetrika
      */
     public function getSourcesSearchPhrases($days = 30, $maxResult = 10)
     {
@@ -270,13 +216,11 @@ class YandexMetrika
      * Отчет "Источники - Поисковые фразы" за период, кол-во результатов - $maxResult
      * @param DateTime $startDate
      * @param DateTime $endDate
-     * @param $maxResult
-     * @return \Illuminate\Support\Collection
+     * @param int $maxResult
+     * @return $this
      */
     public function getSourcesSearchPhrasesForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 10)
     {
-        $data = [];
-        $totals = [];
         $cacheName = md5(serialize('sources-search-phrases'.$startDate->format('Y-m-d').$endDate->format('Y-m-d').$maxResult));
 
         //Параметры запроса
@@ -293,36 +237,10 @@ class YandexMetrika
         //Формируем url для запроса
         $requestUrl = $this->url.'stat/v1/data?'.urldecode(http_build_query($urlParams));
 
-        //Запрос данных
-        $requestData = $this->request($requestUrl, $cacheName);
+        //Запрос данных - возвращает массив или false,если данные не получены
+        $this->data = $this->request($requestUrl, $cacheName);
 
-        //Если данные получены, заполняем массив
-        if( $requestData )
-        {
-            //Формируем массив
-            foreach($requestData['data'] as $item)
-            {
-                $data[] = [
-                    'searchPhrase'      => $item['dimensions'][0]['name'],
-                    'searchEngineRoot'  => $item['dimensions'][1]['name'],
-                    'visits'            => $item['metrics'][0],             //Визиты
-                    'bounceRate'        => $item['metrics'][1],             //Отказы %
-                    'pageDepth'         => $item['metrics'][2],             //Глубина просмотра
-                    'avgVisitDurationSeconds'    => date("i:s", $item['metrics'][3]) //Время проведенное на сайте мин:сек.
-                ];
-            }
-
-            //Итого и средние значения
-            $totals = [
-                'visits'        => $requestData['totals'][0],
-                'bounceRate'    => $requestData['totals'][1],
-                'pageDepth'     => $requestData['totals'][2],
-                'avgVisitDurationSeconds'    => date("i:s", $requestData['totals'][3])
-            ];
-        }
-
-        //отдаем коллекцию
-        return collect(['data' => $data, 'totals' => $totals]);
+        return $this;
     }
 
 
@@ -330,7 +248,7 @@ class YandexMetrika
      * Отчет "Технологии - Браузеры" за $days дней, кол-во результатов - $maxResult
      * @param int $days
      * @param int $maxResult
-     * @return \Illuminate\Support\Collection
+     * @return YandexMetrika
      */
     public function getTechPlatforms($days = 30, $maxResult = 10)
     {
@@ -345,13 +263,11 @@ class YandexMetrika
      * Отчет "Технологии - Браузеры" за период, кол-во результатов - $maxResult
      * @param DateTime $startDate
      * @param DateTime $endDate
-     * @param $maxResult
-     * @return \Illuminate\Support\Collection
+     * @param int $maxResult
+     * @return $this
      */
     public function getTechPlatformsForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 10)
     {
-        $data = [];
-        $totals = [];
         $cacheName = md5(serialize('tech_platforms'.$startDate->format('Y-m-d').$endDate->format('Y-m-d').$maxResult));
 
         //Параметры запроса
@@ -369,35 +285,10 @@ class YandexMetrika
         //Формируем url для запроса
         $requestUrl = $this->url.'stat/v1/data?'.urldecode(http_build_query($urlParams));
 
-        //Запрос данных
-        $requestData = $this->request($requestUrl, $cacheName);
+        //Запрос данных - возвращает массив или false,если данные не получены
+        $this->data = $this->request($requestUrl, $cacheName);
 
-        //Если данные получены, заполняем массив
-        if( $requestData )
-        {
-            //Формируем массив
-            foreach($requestData['data'] as $item)
-            {
-                $data[] = [
-                    'browser'      => $item['dimensions'][0]['name'],
-                    'visits'            => $item['metrics'][0],             //Визиты
-                    'bounceRate'        => $item['metrics'][1],             //Отказы %
-                    'pageDepth'         => $item['metrics'][2],             //Глубина просмотра
-                    'avgVisitDurationSeconds'    => date("i:s", $item['metrics'][3]) //Время проведенное на сайте мин:сек.
-                ];
-            }
-
-            //Итого и средние значения
-            $totals = [
-                'visits'        => $requestData['totals'][0],
-                'bounceRate'    => $requestData['totals'][1],
-                'pageDepth'     => $requestData['totals'][2],
-                'avgVisitDurationSeconds'    => date("i:s", $requestData['totals'][3])
-            ];
-        }
-
-        //отдаем коллекцию
-        return collect(['data' => $data, 'totals' => $totals]);
+        return $this;
     }
 
 
@@ -405,7 +296,7 @@ class YandexMetrika
      * Количество визитов и посетителей с учетом поисковых систем за $days дней
      * @param int $days
      * @param int $maxResult
-     * @return \Illuminate\Support\Collection
+     * @return YandexMetrika
      */
     public function getVisitsUsersSearchEngine($days = 30, $maxResult = 10)
     {
@@ -422,12 +313,10 @@ class YandexMetrika
      * @param DateTime $startDate
      * @param DateTime $endDate
      * @param int $maxResult
-     * @return \Illuminate\Support\Collection
+     * @return $this
      */
     public function getVisitsUsersSearchEngineForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 10)
     {
-        $data = [];
-        $totals = [];
         $cacheName = md5(serialize('visits-users-searchEngine'.$startDate->format('Y-m-d').$endDate->format('Y-m-d').$maxResult));
 
         //Параметры запроса
@@ -436,7 +325,7 @@ class YandexMetrika
             'oauth_token'   => $this->token,
             'date1'         => $startDate->format('Y-m-d'),
             'date2'         => $endDate->format('Y-m-d'),
-            'metrics'       => 'ym:s:visits,ym:s:users',
+            'metrics'       => 'ym:s:users',
             'dimensions'    => 'ym:s:searchEngine',
             'filters'       => "ym:s:trafficSource=='organic'",
             'limit'         => $maxResult
@@ -446,40 +335,18 @@ class YandexMetrika
         //Формируем url для запроса
         $requestUrl = $this->url.'stat/v1/data?'.urldecode(http_build_query($urlParams));
 
-        //Запрос данных
-        $requestData = $this->request($requestUrl, $cacheName);
+        //Запрос данных - возвращает массив или false,если данные не получены
+        $this->data = $this->request($requestUrl, $cacheName);
 
-        //Если данные получены, заполняем массив
-        if( $requestData )
-        {
-            //Формируем массив
-            foreach($requestData['data'] as $item)
-            {
-                $data[] = [
-                    'searchEngine' => $item['dimensions'][0]['name'],
-                    'visits'       => $item['metrics'][0],              //Визиты
-                    'users'        => $item['metrics'][1]               //Юзеры
-                ];
-            }
-
-            //Итого
-            $totals = [
-                'visits'   => $requestData['totals'][0],
-                'users'    => $requestData['totals'][1]
-            ];
-        }
-
-        //отдаем коллекцию
-        return collect(['data' => $data, 'totals' => $totals]);
+        return $this;
     }
 
 
     /**----------------------------------------------------------------------
      * Количество визитов с глубиной просмотра больше $pages страниц, за $days дней
      * @param int $days
-     * @param int $maxResult
      * @param int $pages
-     * @return \Illuminate\Support\Collection
+     * @return YandexMetrika
      */
     public function getVisitsViewsPageDepth($days = 30, $pages = 5)
     {
@@ -496,12 +363,10 @@ class YandexMetrika
      * @param DateTime $startDate
      * @param DateTime $endDate
      * @param int $pages
-     * @return \Illuminate\Support\Collection
+     * @return $this
      */
     public function getVisitsViewsPageDepthForPeriod(DateTime $startDate, DateTime $endDate, $pages = 5)
     {
-        $data = [];
-
         $cacheName = md5(serialize('visits-views-page-depth'.$startDate->format('Y-m-d').$endDate->format('Y-m-d').$pages));
 
         //Параметры запроса
@@ -517,22 +382,116 @@ class YandexMetrika
         //Формируем url для запроса
         $requestUrl = $this->url.'stat/v1/data?'.urldecode(http_build_query($urlParams));
 
-        //Запрос данных
-        $requestData = $this->request($requestUrl, $cacheName);
+        //Запрос данных - возвращает массив или false,если данные не получены
+        $this->data = $this->request($requestUrl, $cacheName);
 
-        //Если данные получены, заполняем массив
-        if( $requestData )
-        {
-            //если есть данные
-            if($requestData['data']){
-                $data = $requestData['data'][0]['metrics'];
-            }
-        }
-
-        //отдаем коллекцию
-        return collect($data);
+        return $this;
     }
 
+
+    /**-----------------------------------------------------------------
+     * Отчеты о посещаемости сайта с распределением по странам и регионам, за последние $days,
+     * кол-во результатов - $maxResult
+     * @param int $days
+     * @param int $maxResult
+     * @return YandexMetrika
+     */
+    public function getGeoCountry($days = 7, $maxResult = 100)
+    {
+        //Вычисляем даты
+        list($startDate, $endDate) = $this->calculateDays($days);
+
+        //Получаем данные
+        return $this->getGeoCountryForPeriod($startDate, $endDate, $maxResult);
+    }
+
+    /**
+     * Отчеты о посещаемости сайта с распределением по странам и регионам, за период
+     * @param DateTime $startDate
+     * @param DateTime $endDate
+     * @param int $maxResult
+     * @return $this
+     */
+    public function getGeoCountryForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 100)
+    {
+
+        $cacheName = md5(serialize('geo_country'.$startDate->format('Y-m-d').$endDate->format('Y-m-d').$maxResult));
+
+        //Параметры запроса
+        $urlParams = [
+            'ids'           => $this->counter_id,
+            'oauth_token'   => $this->token,
+            'date1'         => $startDate->format('Y-m-d'),
+            'date2'         => $endDate->format('Y-m-d'),
+            'dimensions'    => 'ym:s:regionCountry,ym:s:regionArea',
+            'metrics'       => 'ym:s:visits',
+            'sort'          => '-ym:s:visits',
+            'limit'         => $maxResult
+
+        ];
+
+        //Формируем url для запроса
+        $requestUrl = $this->url.'stat/v1/data?'.urldecode(http_build_query($urlParams));
+
+        //Запрос данных - возвращает массив или false,если данные не получены
+        $this->data = $this->request($requestUrl, $cacheName);
+
+        return $this;
+    }
+
+
+    /**-----------------------------------------------------------------
+     * Отчеты о посещаемости сайта с распределением по областям и городам, за последние $days,
+     * кол-во результатов - $maxResult, $countryId - id страны(225 - Россия, 187 - Украина... и т.п.)
+     * @param int $days
+     * @param int $maxResult
+     * @param int $countryId
+     * @return YandexMetrika
+     */
+    public function getGeoArea($days = 7, $maxResult = 100, $countryId = 225)
+    {
+        //Вычисляем даты
+        list($startDate, $endDate) = $this->calculateDays($days);
+
+        //Получаем данные
+        return $this->getGeoAreaForPeriod($startDate, $endDate, $maxResult, $countryId);
+    }
+
+    /**
+     * Отчеты о посещаемости сайта с распределением по областям и городам, за период
+     * @param DateTime $startDate
+     * @param DateTime $endDate
+     * @param int $maxResult
+     * @param int $countryId
+     * @return $this
+     */
+    public function getGeoAreaForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 100, $countryId = 225)
+    {
+
+        $cacheName = md5(serialize('geo_region'.$startDate->format('Y-m-d').$endDate->format('Y-m-d').$maxResult.$countryId));
+
+        //Параметры запроса
+        $urlParams = [
+            'ids'           => $this->counter_id,
+            'oauth_token'   => $this->token,
+            'date1'         => $startDate->format('Y-m-d'),
+            'date2'         => $endDate->format('Y-m-d'),
+            'dimensions'    => 'ym:s:regionArea,ym:s:regionCity',
+            'metrics'       => 'ym:s:visits',
+            'sort'          => '-ym:s:visits',
+            'filters'       => "ym:s:regionCountry=='$countryId'",     //225 - Россия
+            'limit'         => $maxResult
+
+        ];
+
+        //Формируем url для запроса
+        $requestUrl = $this->url.'stat/v1/data?'.urldecode(http_build_query($urlParams));
+
+        //Запрос данных - возвращает массив или false,если данные не получены
+        $this->data = $this->request($requestUrl, $cacheName);
+
+        return $this;
+    }
 
     /**-------------------------------------------------------------------
      * Произвольный запрос к Api Yandex Metrika
@@ -551,7 +510,7 @@ class YandexMetrika
      *
      * @param array $urlParams
      * @param $urlApi
-     * @return bool|mixed
+     * @return $this
      */
     public function getRequestToApi(array $urlParams, $urlApi)
     {
@@ -560,11 +519,10 @@ class YandexMetrika
         //Формируем url для запроса
         $requestUrl = $this->url.$urlApi.urldecode(http_build_query($urlParams));
 
-        //Запрос данных
-        $requestData = $this->request($requestUrl, $cacheName);
+        //Запрос данных - возвращает массив или false,если данные не получены
+        $this->data = $this->request($requestUrl, $cacheName);
 
-        //Возвращаем коллекцию или false,если данные не получены
-        return collect($requestData);
+        return $this;
     }
 
     /**----------------------------------------------------------------------

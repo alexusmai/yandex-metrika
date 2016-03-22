@@ -1,8 +1,9 @@
 # Yandex Metrika Laravel 5 Package
 
-[![Latest Version](https://img.shields.io/github/release/alexusmai/yandex-metrika.svg?style=flat-square)](https://github.com/alexusmai/yandex-metrika/releases)
-[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
-[![Total Downloads](https://img.shields.io/packagist/dt/alexusmai/yandex-metrika.svg?style=flat-square)](https://packagist.org/packages/alexusmai/yandex-metrika)
+[![Latest Stable Version](https://poser.pugx.org/alexusmai/yandex-metrika/v/stable)](https://packagist.org/packages/alexusmai/yandex-metrika) 
+[![Total Downloads](https://poser.pugx.org/alexusmai/yandex-metrika/downloads)](https://packagist.org/packages/alexusmai/yandex-metrika) 
+[![Latest Unstable Version](https://poser.pugx.org/alexusmai/yandex-metrika/v/unstable)](https://packagist.org/packages/alexusmai/yandex-metrika) 
+[![License](https://poser.pugx.org/alexusmai/yandex-metrika/license)](https://packagist.org/packages/alexusmai/yandex-metrika)
 
 Пакет предназначен для получения данных статистики Яндекс Метрики.
 
@@ -67,30 +68,33 @@ YandexMetrika {#373 ▼
   #token: "123456789"
   #counter_id: "123456789"
   #cache: 60
-  +data: array:11 [▼
-    "query" => array:9 [▶]
-    "data" => array:2 [▶]
-    "total_rows" => 2
-    "sampled" => false
-    "sample_share" => 1.0
-    "sample_size" => 80
-    "sample_space" => 80
-    "data_lag" => 63
-    "totals" => array:2 [▶]
-    "min" => array:2 [▶]
-    "max" => array:2 [▶]
-  ]
+  #getMethodName: "getVisitsViewsUsersForPeriod"
+    #adaptMethodName: "adaptVisitsViewsUsers"
+    +data: array:11 [▼
+      "query" => array:13 [▶]
+      "data" => array:11 [▶]
+      "total_rows" => 11
+      "sampled" => false
+      "sample_share" => 1.0
+      "sample_size" => 122
+      "sample_space" => 122
+      "data_lag" => 87
+      "totals" => array:3 [▶]
+      "min" => array:3 [▶]
+      "max" => array:3 [▶]
+    ]
+    +adaptData: array:2 [▶]
 }
 ```
-Если данные не получены - false.
+Если данные не получены - null.
 Ошибки возникающие при запросе данных пишутся в лог с названием Yandex Metrika:
 
 Все запросы кэшируются, время жизни кэша указывается в конфигурационном файле.
+!!! Внимание - отрицаетльный результат запроса (null) будет также закэширован !!!
 
 Для обработки полученных данных есть дополнительные методы, которые делают данные более удобными для применения.
-!!! Для метода получения данных - меод обработки носит такое же название, только вместо get - adapt
-Например getTechPlatforms() adaptTechPlatforms()
-Не у всех методов для получения данных есть метод для обработки.
+Для их спользования используйте метод adapt()
+Не у всех методов для получения данных есть метод для обработки. У getRequestToApi() - нету
 
 ### Получаем кол-во: визитов, просмотров, уникальных посетителей по дням
 
@@ -101,7 +105,7 @@ YandexMetrika::getVisitsViewsUsers(10); //За последние 10 дней
 //За период
 YandexMetrika::getVisitsViewsUsersForPeriod(DateTime $startDate, DateTime $endDate) //За указанный период
 //Обработка полученных данных для построения графика Highcharts › Basic line
-YandexMetrika::getVisitsViewsUsers()->adaptVisitsViewsUsers();
+YandexMetrika::getVisitsViewsUsers()->adapt();
 ```
 
 ### Самые просматриваемые страницы
@@ -113,7 +117,7 @@ YandexMetrika::getTopPageViews(10, 50); //За последние 10 дней, �
 //За период
 YandexMetrika::getTopPageViewsForPeriod(DateTime $startDate, DateTime $endDate, $maxResults = 10)   //По умолчанию максимум 10 результатов
 //Обработка полученных данных
-YandexMetrika::getTopPageViews()->adaptTopPageViews();
+YandexMetrika::getTopPageViews()->adapt();
 ```
 
 ### Отчет "Источники - Сводка"
@@ -125,7 +129,7 @@ YandexMetrika::getSourceSummary(7);     //За последние 10 дней
 //За период
 YandexMetrika::getSourcesSummaryForPeriod(DateTime $startDate, DateTime $endDate)
 //Обработка полученных данных
-YandexMetrika::getSourcesSummary()->adaptSourcesSummary();
+YandexMetrika::getSourcesSummary()->adapt();
 ```
 
 ### Отчет "Источники - Поисковые фразы"
@@ -137,7 +141,7 @@ YandexMetrika::getSourcesSearchPhrases(15, 20); //За последние 15 д�
 //За период
 YandexMetrika::getSourcesSearchPhrasesForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 10)    //По максимум - 10 результатов
 //Обработка полученных данных
-YandexMetrika::getSourcesSearchPhrases()->adaptSourcesSearchPhrases();
+YandexMetrika::getSourcesSearchPhrases()->adapt();
 ```
 
 ###  Отчет "Технологии - Браузеры"
@@ -149,7 +153,7 @@ YandexMetrika::getTechPlatforms(12, 5); //За последние 12 дней, �
 //За период
 YandexMetrika::getTechPlatformsForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 10)   //По умолчанию максимум 10 результатов
 //Обработка полученных данных
-YandexMetrika::getTechPlatforms()->adaptTechPlatforms();
+YandexMetrika::getTechPlatforms()->adapt();
 ```
 
 ### Количество визитов и посетителей с учетом поисковых систем
@@ -161,7 +165,7 @@ YandexMetrika::getVisitsUsersSearchEngine(24, 60);  //За последние 24
 //За период
 YandexMetrika::getVisitsUsersSearchEngineForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 10) //По умолчанию максимум 10 результатов
 //Обработка полученных данных
-YandexMetrika::getVisitsUsersSearchEngine()->adaptVisitsUsersSearchEngine();
+YandexMetrika::getVisitsUsersSearchEngine()->adapt();
 ```
 
 ### Количество визитов с заданной глубиной просмотра
@@ -172,6 +176,8 @@ YandexMetrika::getVisitsViewsPageDepth();       //По умолчанию за �
 YandexMetrika::getVisitsViewsPageDepth(14, 30);   //За последние 14 дней, макс количество результатов - 30
 //За период
 YandexMetrika::getVisitsViewsPageDepthForPeriod(DateTime $startDate, DateTime $endDate, $pages = 5) //По умолчанию - 5 страниц
+//Обработка полученных данных
+YandexMetrika::getVisitsViewsPageDepth()->adapt();
 ```
 
 ### Отчеты о посещаемости сайта с распределением по странам и регионам
@@ -183,7 +189,7 @@ YandexMetrika::getGeoCountry(12, 30);   //За последние 12 дней, �
 //За период
 YandexMetrika::getGeoCountryForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 100) //По умолчанию максимум 100 результатов
 //Обработка полученных данных для построения графика Highcharts.js > Pie with drilldown
-YandexMetrika::getGeoCountry()->adaptGeoPie()();
+YandexMetrika::getGeoCountry()->adapt()();
 ```
 
 ### Отчеты о посещаемости сайта с распределением по областям и городам
@@ -195,7 +201,7 @@ YandexMetrika::getGeoArea(12, 30, 187);   //За последние 12 дней,
 //За период
 YandexMetrika::getGeoAreaForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 100, $countryId = 225)
 //Обработка полученных данных для построения графика Highcharts.js > Pie with drilldown
-YandexMetrika::getGeoArea()->adaptGeoPie()();
+YandexMetrika::getGeoArea()->adapt()();
 ```
 
 Для методов getGeoCountry() и getGeoArea() - метод обработки данных общий - adaptGeoPie()

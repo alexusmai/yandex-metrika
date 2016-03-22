@@ -1,5 +1,7 @@
 <?php namespace Alexusmai\YandexMetrika;
 
+use Log;
+use Cache;
 use DateTime;
 use Carbon\Carbon;
 use GuzzleHttp\Client as GuzzleClient;
@@ -35,10 +37,28 @@ class YandexMetrika
     protected $cache;
 
     /**
-     * Данные
+     * Имя метода получения даннных
+     * @var
+     */
+    protected $getMethodName;
+
+    /**
+     * Имя метода обработки данных
+     * @var
+     */
+    protected $adaptMethodName;
+
+    /**
+     * Полученные данные с серверов Yandex Metriki
      * @var
      */
     public $data;
+
+    /**
+     * Данные прошедшие обработку
+     * @var
+     */
+    public $adaptData;
 
 
     /**
@@ -52,19 +72,61 @@ class YandexMetrika
     }
 
 
-    /**----------------------------------------------------------------------
+    /**
+     * Вызов методов получения данных
+     * @param $name
+     * @param $arguments
+     * @return $this
+     */
+    public function __call($name, $arguments)
+    {
+        //Если такой метод существует, то вызываем его
+        if( method_exists($this, $name) ){
+
+            //Имя метода
+            $this->getMethodName = $name;
+
+            //Формируем имя для функции адаптации
+            $this->adaptMethodName = str_replace(['get','ForPeriod'], ['adapt',''], $this->getMethodName);
+
+            //Вызываем нужную функцию
+            call_user_func_array([$this, $name], $arguments);
+        }
+
+        return $this;
+    }
+
+
+    /**
+     * Приводим полученные данные в удобочитаемый вид
+     * @return $this
+     */
+    public function adapt(){
+
+        //Если такой метод есть, а также данные получены, то обрабатываем их
+        if( method_exists($this, $this->adaptMethodName) && $this->data ){
+
+            //Вызываем функцию для адаптации полученных данных
+            call_user_func([$this, $this->adaptMethodName]);
+        }
+
+        return $this;
+    }
+
+
+    /**--------------------------------------------------------------------
      * Получаем кол-во: визитов, просмотров, уникальных посетителей по дням,
      * за выбранное кол-во дней
      * @param int $days
-     * @return YandexMetrika
      */
-    public function getVisitsViewsUsers($days = 30)
+    protected function getVisitsViewsUsers($days = 30)
     {
+
         //Вычисляем даты
         list($startDate, $endDate) = $this->calculateDays($days);
 
         //Получаем данные
-        return $this->getVisitsViewsUsersForPeriod($startDate, $endDate);
+        $this->getVisitsViewsUsersForPeriod($startDate, $endDate);
     }
 
 
@@ -73,9 +135,8 @@ class YandexMetrika
      * за выбранный период
      * @param DateTime $startDate
      * @param DateTime $endDate
-     * @return $this
      */
-    public function getVisitsViewsUsersForPeriod(DateTime $startDate, DateTime $endDate)
+    protected function getVisitsViewsUsersForPeriod(DateTime $startDate, DateTime $endDate)
     {
         $cacheName = md5(serialize('visits-views-users'.$startDate->format('Y-m-d').$endDate->format('Y-m-d')));
 
@@ -95,24 +156,21 @@ class YandexMetrika
 
         //Запрос данных - возвращает массив или false,если данные не получены
         $this->data = $this->request($requestUrl, $cacheName);
-
-        return $this;
     }
 
 
-    /**----------------------------------------------------------------------
+    /**-----------------------------------------------------------------
      * Самые просматриваемые страницы за $days, количество - $maxResult
      * @param int $days
      * @param int $maxResults
-     * @return YandexMetrika
      */
-    public function getTopPageViews($days = 30, $maxResults = 10)
+    protected function getTopPageViews($days = 30, $maxResults = 10)
     {
         //Вычисляем даты
         list($startDate, $endDate) = $this->calculateDays($days);
 
         //Получаем данные
-        return $this->getTopPageViewsForPeriod($startDate, $endDate, $maxResults);
+        $this->getTopPageViewsForPeriod($startDate, $endDate, $maxResults);
     }
 
 
@@ -121,9 +179,8 @@ class YandexMetrika
      * @param DateTime $startDate
      * @param DateTime $endDate
      * @param int $maxResults
-     * @return $this
      */
-    public function getTopPageViewsForPeriod(DateTime $startDate, DateTime $endDate, $maxResults = 10)
+    protected function getTopPageViewsForPeriod(DateTime $startDate, DateTime $endDate, $maxResults = 10)
     {
 
         $cacheName = md5(serialize('top-pages-views'.$startDate->format('Y-m-d').$endDate->format('Y-m-d').$maxResults));
@@ -147,32 +204,29 @@ class YandexMetrika
         //Запрос данных - возвращает массив или false,если данные не получены
         $this->data = $this->request($requestUrl, $cacheName);
 
-        return $this;
-
     }
 
 
-    /**----------------------------------------------------------------------
+    /**----------------------------------------------------
      * Отчет "Источники - Сводка" за последние $days дней
      * @param int $days
-     * @return YandexMetrika
      */
-    public function getSourcesSummary($days = 30)
+    protected function getSourcesSummary($days = 30)
     {
         //Вычисляем даты
         list($startDate, $endDate) = $this->calculateDays($days);
 
         //Получаем данные
-        return $this->getSourcesSummaryForPeriod($startDate, $endDate);
+        $this->getSourcesSummaryForPeriod($startDate, $endDate);
     }
+
 
     /**
      * Отчет "Источники - Сводка" за период
      * @param DateTime $startDate
      * @param DateTime $endDate
-     * @return $this
      */
-    public function getSourcesSummaryForPeriod(DateTime $startDate, DateTime $endDate)
+    protected function getSourcesSummaryForPeriod(DateTime $startDate, DateTime $endDate)
     {
         $cacheName = md5(serialize('sources-summary'.$startDate->format('Y-m-d').$endDate->format('Y-m-d')));
 
@@ -191,24 +245,21 @@ class YandexMetrika
 
         //Запрос данных - возвращает массив или false,если данные не получены
         $this->data = $this->request($requestUrl, $cacheName);
-
-        return $this;
     }
 
 
-    /**----------------------------------------------------------------------
+    /**-----------------------------------------------------------------------------------
      * Отчет "Источники - Поисковые фразы" за $days дней, кол-во результатов - $maxResult
      * @param int $days
      * @param int $maxResult
-     * @return YandexMetrika
      */
-    public function getSourcesSearchPhrases($days = 30, $maxResult = 10)
+    protected function getSourcesSearchPhrases($days = 30, $maxResult = 10)
     {
         //Вычисляем даты
         list($startDate, $endDate) = $this->calculateDays($days);
 
         //Получаем данные
-        return $this->getSourcesSearchPhrasesForPeriod($startDate, $endDate, $maxResult);
+        $this->getSourcesSearchPhrasesForPeriod($startDate, $endDate, $maxResult);
     }
 
 
@@ -217,9 +268,8 @@ class YandexMetrika
      * @param DateTime $startDate
      * @param DateTime $endDate
      * @param int $maxResult
-     * @return $this
      */
-    public function getSourcesSearchPhrasesForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 10)
+    protected function getSourcesSearchPhrasesForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 10)
     {
         $cacheName = md5(serialize('sources-search-phrases'.$startDate->format('Y-m-d').$endDate->format('Y-m-d').$maxResult));
 
@@ -239,34 +289,31 @@ class YandexMetrika
 
         //Запрос данных - возвращает массив или false,если данные не получены
         $this->data = $this->request($requestUrl, $cacheName);
-
-        return $this;
     }
 
 
-    /**----------------------------------------------------------------------
+    /**-----------------------------------------------------------------------------
      * Отчет "Технологии - Браузеры" за $days дней, кол-во результатов - $maxResult
      * @param int $days
      * @param int $maxResult
-     * @return YandexMetrika
      */
-    public function getTechPlatforms($days = 30, $maxResult = 10)
+    protected function getTechPlatforms($days = 30, $maxResult = 10)
     {
         //Вычисляем даты
         list($startDate, $endDate) = $this->calculateDays($days);
 
         //Получаем данные
-        return $this->getTechPlatformsForPeriod($startDate, $endDate, $maxResult);
+        $this->getTechPlatformsForPeriod($startDate, $endDate, $maxResult);
     }
+
 
     /**
      * Отчет "Технологии - Браузеры" за период, кол-во результатов - $maxResult
      * @param DateTime $startDate
      * @param DateTime $endDate
      * @param int $maxResult
-     * @return $this
      */
-    public function getTechPlatformsForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 10)
+    protected function getTechPlatformsForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 10)
     {
         $cacheName = md5(serialize('tech_platforms'.$startDate->format('Y-m-d').$endDate->format('Y-m-d').$maxResult));
 
@@ -287,24 +334,21 @@ class YandexMetrika
 
         //Запрос данных - возвращает массив или false,если данные не получены
         $this->data = $this->request($requestUrl, $cacheName);
-
-        return $this;
     }
 
 
-    /**----------------------------------------------------------------------
+    /**-------------------------------------------------------------------------
      * Количество визитов и посетителей с учетом поисковых систем за $days дней
      * @param int $days
      * @param int $maxResult
-     * @return YandexMetrika
      */
-    public function getVisitsUsersSearchEngine($days = 30, $maxResult = 10)
+    protected function getVisitsUsersSearchEngine($days = 30, $maxResult = 10)
     {
         //Вычисляем даты
         list($startDate, $endDate) = $this->calculateDays($days);
 
         //Получаем данные
-        return $this->getVisitsUsersSearchEngineForPeriod($startDate, $endDate, $maxResult);
+        $this->getVisitsUsersSearchEngineForPeriod($startDate, $endDate, $maxResult);
     }
 
 
@@ -313,9 +357,8 @@ class YandexMetrika
      * @param DateTime $startDate
      * @param DateTime $endDate
      * @param int $maxResult
-     * @return $this
      */
-    public function getVisitsUsersSearchEngineForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 10)
+    protected function getVisitsUsersSearchEngineForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 10)
     {
         $cacheName = md5(serialize('visits-users-searchEngine'.$startDate->format('Y-m-d').$endDate->format('Y-m-d').$maxResult));
 
@@ -337,24 +380,21 @@ class YandexMetrika
 
         //Запрос данных - возвращает массив или false,если данные не получены
         $this->data = $this->request($requestUrl, $cacheName);
-
-        return $this;
     }
 
 
-    /**----------------------------------------------------------------------
+    /**-----------------------------------------------------------------------------
      * Количество визитов с глубиной просмотра больше $pages страниц, за $days дней
      * @param int $days
      * @param int $pages
-     * @return YandexMetrika
      */
-    public function getVisitsViewsPageDepth($days = 30, $pages = 5)
+    protected function getVisitsViewsPageDepth($days = 30, $pages = 5)
     {
         //Вычисляем даты
         list($startDate, $endDate) = $this->calculateDays($days);
 
         //Получаем данные
-        return $this->getVisitsViewsPageDepthForPeriod($startDate, $endDate, $pages);
+        $this->getVisitsViewsPageDepthForPeriod($startDate, $endDate, $pages);
     }
 
 
@@ -363,9 +403,8 @@ class YandexMetrika
      * @param DateTime $startDate
      * @param DateTime $endDate
      * @param int $pages
-     * @return $this
      */
-    public function getVisitsViewsPageDepthForPeriod(DateTime $startDate, DateTime $endDate, $pages = 5)
+    protected function getVisitsViewsPageDepthForPeriod(DateTime $startDate, DateTime $endDate, $pages = 5)
     {
         $cacheName = md5(serialize('visits-views-page-depth'.$startDate->format('Y-m-d').$endDate->format('Y-m-d').$pages));
 
@@ -384,35 +423,32 @@ class YandexMetrika
 
         //Запрос данных - возвращает массив или false,если данные не получены
         $this->data = $this->request($requestUrl, $cacheName);
-
-        return $this;
     }
 
 
-    /**-----------------------------------------------------------------
+    /**---------------------------------------------------------------------------------------
      * Отчеты о посещаемости сайта с распределением по странам и регионам, за последние $days,
      * кол-во результатов - $maxResult
      * @param int $days
      * @param int $maxResult
-     * @return YandexMetrika
      */
-    public function getGeoCountry($days = 7, $maxResult = 100)
+    protected function getGeoCountry($days = 7, $maxResult = 100)
     {
         //Вычисляем даты
         list($startDate, $endDate) = $this->calculateDays($days);
 
         //Получаем данные
-        return $this->getGeoCountryForPeriod($startDate, $endDate, $maxResult);
+        $this->getGeoCountryForPeriod($startDate, $endDate, $maxResult);
     }
+
 
     /**
      * Отчеты о посещаемости сайта с распределением по странам и регионам, за период
      * @param DateTime $startDate
      * @param DateTime $endDate
      * @param int $maxResult
-     * @return $this
      */
-    public function getGeoCountryForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 100)
+    protected function getGeoCountryForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 100)
     {
 
         $cacheName = md5(serialize('geo_country'.$startDate->format('Y-m-d').$endDate->format('Y-m-d').$maxResult));
@@ -435,26 +471,23 @@ class YandexMetrika
 
         //Запрос данных - возвращает массив или false,если данные не получены
         $this->data = $this->request($requestUrl, $cacheName);
-
-        return $this;
     }
 
 
-    /**-----------------------------------------------------------------
+    /**------------------------------------------------------------------------------------------------
      * Отчеты о посещаемости сайта с распределением по областям и городам, за последние $days,
      * кол-во результатов - $maxResult, $countryId - id страны(225 - Россия, 187 - Украина... и т.п.)
      * @param int $days
      * @param int $maxResult
      * @param int $countryId
-     * @return YandexMetrika
      */
-    public function getGeoArea($days = 7, $maxResult = 100, $countryId = 225)
+    protected function getGeoArea($days = 7, $maxResult = 100, $countryId = 225)
     {
         //Вычисляем даты
         list($startDate, $endDate) = $this->calculateDays($days);
 
         //Получаем данные
-        return $this->getGeoAreaForPeriod($startDate, $endDate, $maxResult, $countryId);
+        $this->getGeoAreaForPeriod($startDate, $endDate, $maxResult, $countryId);
     }
 
     /**
@@ -463,9 +496,8 @@ class YandexMetrika
      * @param DateTime $endDate
      * @param int $maxResult
      * @param int $countryId
-     * @return $this
      */
-    public function getGeoAreaForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 100, $countryId = 225)
+    protected function getGeoAreaForPeriod(DateTime $startDate, DateTime $endDate, $maxResult = 100, $countryId = 225)
     {
 
         $cacheName = md5(serialize('geo_region'.$startDate->format('Y-m-d').$endDate->format('Y-m-d').$maxResult.$countryId));
@@ -489,8 +521,6 @@ class YandexMetrika
 
         //Запрос данных - возвращает массив или false,если данные не получены
         $this->data = $this->request($requestUrl, $cacheName);
-
-        return $this;
     }
 
     /**-------------------------------------------------------------------
@@ -532,7 +562,7 @@ class YandexMetrika
      */
     protected function request($url, $cacheName)
     {
-        return \Cache::remember($cacheName, $this->cache, function() use($url){
+        return Cache::remember($cacheName, $this->cache, function() use($url){
             try
             {
                 $client = new GuzzleClient();
@@ -544,10 +574,10 @@ class YandexMetrika
             } catch (ClientException $e)
             {
                 //Логируем ошибку
-                \Log::error('Yandex Metrika: '.$e->getMessage());
+                Log::error('Yandex Metrika: '.$e->getMessage());
 
                 //Данные не получены
-                $result = false;
+                $result = null;
             }
 
             return $result;

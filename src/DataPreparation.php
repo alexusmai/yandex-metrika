@@ -7,16 +7,9 @@ trait DataPreparation
 
     /**
      * Данные для графика Highcharts › Basic line
-     * @return array|bool
      */
-    public function adaptVisitsViewsUsers()
+    protected function adaptVisitsViewsUsers()
     {
-
-        //Есть ли данные
-        if( !$this->data )
-        {
-            return false;
-        }
 
         //Формируем массив данных для графика
         $itemArray = [];
@@ -35,26 +28,18 @@ trait DataPreparation
             [ 'name'  => 'Посетители', 'data' => $itemArray['users'] ]
         ];
 
-        return [
+        $this->adaptData = [
             'dataArray' => json_encode( $dataArray, JSON_UNESCAPED_UNICODE),
             'dateArray' => json_encode( $itemArray['date'], JSON_UNESCAPED_UNICODE)
         ];
     }
 
 
-
     /**
      * Самые просматриваемые страницы
-     * @return array|bool
      */
-    public function adaptTopPageViews()
+    protected function adaptTopPageViews()
     {
-
-        //Есть ли данные
-        if( !$this->data )
-        {
-            return false;
-        }
 
         $dataArray = [];
 
@@ -68,23 +53,16 @@ trait DataPreparation
             ];
         }
 
-        return $dataArray;
+        $this->adaptData = $dataArray;
     }
 
 
 
     /**
      * Отчет "Источники - Сводка"
-     * @return array|bool
      */
-    public function adaptSourcesSummary()
+    protected function adaptSourcesSummary()
     {
-        //Есть ли данные
-        if( !$this->data )
-        {
-            return false;
-        }
-
         $dataArray = [];
 
         //Формируем массив
@@ -108,23 +86,16 @@ trait DataPreparation
             'avgVisitDurationSeconds'    => date("i:s", $this->data['totals'][3])
         ];
 
-        return $dataArray;
+        $this->adaptData = $dataArray;
     }
 
 
 
     /**
      * Отчет "Источники - Поисковые фразы"
-     * @return bool
      */
-    public function adaptSourcesSearchPhrases()
+    protected function adaptSourcesSearchPhrases()
     {
-        //Есть ли данные
-        if( !$this->data )
-        {
-            return false;
-        }
-
         $dataArray = [];
 
         //Формируем массив
@@ -148,23 +119,16 @@ trait DataPreparation
             'avgVisitDurationSeconds'    => date("i:s", $this->data['totals'][3])
         ];
 
-        return $dataArray;
+        $this->adaptData = $dataArray;
     }
 
 
 
     /**
      * Отчет "Технологии - Браузеры"
-     * @return array|bool
      */
-    public function adaptTechPlatforms()
+    protected function adaptTechPlatforms()
     {
-        //Есть ли данные
-        if( !$this->data )
-        {
-            return false;
-        }
-
         $dataArray = [];
 
         //Формируем массив
@@ -187,23 +151,16 @@ trait DataPreparation
             'avgVisitDurationSeconds'    => date("i:s", $this->data['totals'][3])
         ];
 
-        return $dataArray;
+        $this->adaptData = $dataArray;
     }
 
 
 
     /**
      * Количество визитов и посетителей с учетом поисковых систем
-     * @return array|bool
      */
-    public function adaptVisitsUsersSearchEngine()
+    protected function adaptVisitsUsersSearchEngine()
     {
-        //Есть ли данные
-        if( !$this->data )
-        {
-            return false;
-        }
-
         $dataArray = [];
 
         //Формируем массив
@@ -220,24 +177,43 @@ trait DataPreparation
             'users'    => $this->data['totals'][0]
         ];
 
-        return $dataArray;
+        $this->adaptData = $dataArray;
     }
 
+
+    /**
+     * Количество визитов с глубиной просмотра больше $pages страниц, за $days дней
+     */
+    protected function adaptVisitsViewsPageDepth()
+    {
+        $this->adaptData = $this->data['totals'][0];
+    }
+
+
+    /**
+     * Вызов общего метода adaptGeoPie()
+     */
+    protected function adaptGeoArea()
+    {
+        $this->adaptGeoPie();
+    }
+
+
+    /**
+     * Вызов общего метода adaptGeoPie()
+     */
+    protected function adaptGeoCountry()
+    {
+        $this->adaptGeoPie();
+    }
 
 
     /**
      * География посещений Страны/Области
      * Подготовка данных для построения графика Highcharts > Pie with drilldown
-     * @return array|bool
      */
-    public function adaptGeoPie()
+    protected function adaptGeoPie()
     {
-        //Есть ли данные
-        if( !$this->data )
-        {
-            return false;
-        }
-
         //Выбираем уникальные id стран/областей
         $key_array = [];
 
@@ -287,12 +263,11 @@ trait DataPreparation
             }
         }
 
-        return [
+        $this->adaptData = [
             'dataArray' => json_encode( $dataArray, JSON_UNESCAPED_UNICODE),
             'drilldownArray' => json_encode( $drilldownArray, JSON_UNESCAPED_UNICODE)
         ];
     }
-
 
 
 }

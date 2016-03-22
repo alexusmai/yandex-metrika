@@ -69,21 +69,21 @@ YandexMetrika {#373 ▼
   #counter_id: "123456789"
   #cache: 60
   #getMethodName: "getVisitsViewsUsersForPeriod"
-    #adaptMethodName: "adaptVisitsViewsUsers"
-    +data: array:11 [▼
-      "query" => array:13 [▶]
-      "data" => array:11 [▶]
-      "total_rows" => 11
-      "sampled" => false
-      "sample_share" => 1.0
-      "sample_size" => 122
-      "sample_space" => 122
-      "data_lag" => 87
-      "totals" => array:3 [▶]
-      "min" => array:3 [▶]
-      "max" => array:3 [▶]
-    ]
-    +adaptData: array:2 [▶]
+  #adaptMethodName: "adaptVisitsViewsUsers"
+  +data: array:11 [▼
+    "query" => array:13 [▶]
+    "data" => array:11 [▶]
+    "total_rows" => 11
+    "sampled" => false
+    "sample_share" => 1.0
+    "sample_size" => 122
+    "sample_space" => 122
+    "data_lag" => 87
+    "totals" => array:3 [▶]
+    "min" => array:3 [▶]
+    "max" => array:3 [▶]
+  ]
+  +adaptData: array:2 [▶]
 }
 ```
 Если данные не получены - null.

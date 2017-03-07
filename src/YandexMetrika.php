@@ -306,6 +306,20 @@ class YandexMetrika
         $this->getTechPlatformsForPeriod($startDate, $endDate, $maxResult);
     }
 
+    /**-----------------------------------------------------------------------------
+     * Отчет "Технологии - Браузеры" за $days дней, кол-во результатов - $maxResult
+     * @param int $days
+     * @param int $maxResult
+     */
+    protected function getTestFork($days = 30, $maxResult = 10)
+    {
+        //Вычисляем даты
+        list($startDate, $endDate) = $this->calculateDays($days);
+
+        //Получаем данные
+        $this->getTechPlatformsForPeriod($startDate, $endDate, $maxResult);
+    }
+
 
     /**
      * Отчет "Технологии - Браузеры" за период, кол-во результатов - $maxResult

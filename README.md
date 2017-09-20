@@ -15,17 +15,18 @@
 composer require alexusmai/yandex-metrika
 ```
 
-Добавить сервис провайдер в app/config/app.php
+Если у вас установлен Laravel 5.4 или более ранней версии, то в app/config/app.php нужно добавить провайдера,
 
 ``` php
 Alexusmai\YandexMetrika\YandexMetrikaServiceProvider::class,
 ```
 
-Добавить алиас
+и добавить алиас.
 
 ``` php
 'YandexMetrika' => Alexusmai\YandexMetrika\YandexMetrikaFacade::class,
 ```
+
 
 Публикуем файл настроек
 

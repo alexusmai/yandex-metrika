@@ -7,6 +7,14 @@
 
 Пакет предназначен для получения данных статистики Яндекс Метрики.
 
+**В связи с последними изменениями, token перенесен в HTTP заголовок - установите v1.0**
+
+```
+ Передача авторизационного токена в параметрах URL перестанет работать
+13 февраля 2019 года. Чтобы продолжить работу с API Метрики,
+настройте авторизацию по токену в HTTP-заголовке.
+```
+
 ## Установка
 
 С помощью Composer
@@ -64,34 +72,32 @@ https://oauth.yandex.ru/authorize?response_type=token&client_id=подстави
 Результат запроса - объект.
 
 ```
-YandexMetrika {#373 ▼
-  #url: "https://api-metrika.yandex.ru/"
-  #token: "123456789"
-  #counter_id: "123456789"
-  #cache: 60
-  #getMethodName: "getVisitsViewsUsersForPeriod"
+YandexMetrika {#464 ▼
+  #url: "https://api-metrika.yandex.net/stat/v1/data"
+  #counter_id: "12345678"
+  #getMethodName: "getVisitsViewsUsers"
   #adaptMethodName: "adaptVisitsViewsUsers"
-  +data: array:11 [▼
-    "query" => array:13 [▶]
-    "data" => array:11 [▶]
-    "total_rows" => 11
+  +data: array:12 [▼
+    "query" => array:14 [▶]
+    "data" => array:31 [▶]
+    "total_rows" => 31
+    "total_rows_rounded" => false
     "sampled" => false
     "sample_share" => 1.0
-    "sample_size" => 122
-    "sample_space" => 122
-    "data_lag" => 87
+    "sample_size" => 350
+    "sample_space" => 350
+    "data_lag" => 100
     "totals" => array:3 [▶]
     "min" => array:3 [▶]
     "max" => array:3 [▶]
   ]
-  +adaptData: array:2 [▶]
+  +adaptData: null
 }
 ```
 Если данные не получены - null.
 Ошибки возникающие при запросе данных пишутся в лог с названием Yandex Metrika:
 
 Все запросы кэшируются, время жизни кэша указывается в конфигурационном файле.
-!!! Внимание - отрицаетльный результат запроса (null) будет также закэширован !!!
 
 Для обработки полученных данных есть дополнительные методы, которые делают данные более удобными для применения.
 Для их спользования используйте метод adapt()
@@ -209,22 +215,15 @@ YandexMetrika::getGeoArea()->adapt()();
 
 ### Произвольный запрос к Api Yandex Metrika
 
-Внимание! В данном случае id счетчика и token, не подставляются из файла конфигурации, а указываются вручную в параметрах запроса!!!
-
 ``` php
-getRequestToApi(array $urlParams, $urlApi)
-//Пример
 //Параметры запроса
 $urlParams = [
-            'ids'           => '123456',    //id счетчика
-            'oauth_token'   => '123456',    //oauth token
+            'ids'           => '123456',                        //id счетчика
             'date1'         => Carbon::today()->subDays(10),    //Начальная дата
-            'date2'         => Carbon::today(),     //Конечная дата
+            'date2'         => Carbon::today(),                 //Конечная дата
             'metrics'       => 'ym:s:visits',
             'filters'       => 'ym:s:pageViews>5'
         ];
-//<раздел_API>/<версия>/<имя_метода>.<формат_результата>?
-$url ='stat/v1/data?';
 //Запрос
-YandexMetrika::getRequestToApi($urlParams, $url);
+YandexMetrika::getRequestToApi($urlParams);
 ```

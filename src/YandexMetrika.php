@@ -55,13 +55,20 @@ class YandexMetrika
      */
     public $adaptData;
 
+    /**
+     * Токен авторизации
+     *
+     * @var
+     */
+    protected $OAuth = null;
 
     /**
      * YandexMetrika constructor.
      */
-    public function __construct()
+    public function __construct($OAuth = null, $counterId = null)
     {
-        $this->counter_id = config('yandex-metrika.counter_id');
+        $this->OAuth = $OAuth ?? config('yandex-metrika.token');
+        $this->counter_id = $counterId ?? config('yandex-metrika.counter_id');
     }
 
     /**
@@ -512,7 +519,7 @@ class YandexMetrika
             $client = new GuzzleClient([
                 'headers' => [
                     'Content-Type'  => 'application/x-yametrika+json',
-                    'Authorization' => 'OAuth '.config('yandex-metrika.token'),
+                    'Authorization' => 'OAuth ' . $this->OAuth,
                 ],
             ]);
 

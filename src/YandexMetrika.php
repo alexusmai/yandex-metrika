@@ -28,6 +28,20 @@ class YandexMetrika
     protected $counter_id;
 
     /**
+     * Token
+     *
+     * @var
+     */
+    protected $token;
+
+    /**
+     * Время кэширования в минутах, для laravel 5.8 и выше - в секундах
+     *
+     * @var
+     */
+    protected $cache;
+
+    /**
      * Имя метода получения даннных
      *
      * @var
@@ -62,6 +76,7 @@ class YandexMetrika
     public function __construct()
     {
         $this->counter_id = config('yandex-metrika.counter_id');
+        $this->token = config('yandex-metrika.token');
     }
 
     /**
@@ -97,6 +112,24 @@ class YandexMetrika
         if (method_exists($this, $this->adaptMethodName) && $this->data) {
             call_user_func([$this, $this->adaptMethodName]);
         }
+
+        return $this;
+    }
+
+    /**
+     * Установить другой счетчик
+     *
+     * @param      $token
+     * @param      $counterId
+     * @param null $cache
+     *
+     * @return $this
+     */
+    public function setCounter($token, $counterId, $cache = null)
+    {
+        $this->token = $token;
+        $this->counter_id = $counterId;
+        $this->cache = $cache ? $cache : config('yandex-metrika.cache');
 
         return $this;
     }
@@ -512,7 +545,7 @@ class YandexMetrika
             $client = new GuzzleClient([
                 'headers' => [
                     'Content-Type'  => 'application/x-yametrika+json',
-                    'Authorization' => 'OAuth '.config('yandex-metrika.token'),
+                    'Authorization' => 'OAuth '.$this->token,
                 ],
             ]);
 
@@ -528,7 +561,7 @@ class YandexMetrika
         }
 
         if ($result) {
-            Cache::put($cacheName, $result, config('yandex-metrika.cache'));
+            Cache::put($cacheName, $result, $this->cache);
         }
 
         return $result;

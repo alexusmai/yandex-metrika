@@ -531,12 +531,14 @@ class YandexMetrika
      * GET запрос данных и кэширование
      *
      * @param $urlParams
-     * @param $cacheName
+     * @param $name
      *
      * @return mixed|null
      */
-    protected function request($urlParams, $cacheName)
+    protected function request($urlParams, $name)
     {
+        $cacheName = $this->counter_id.'_'.$name;
+
         if (Cache::has($cacheName)) {
             return Cache::get($cacheName);
         }

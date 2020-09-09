@@ -77,6 +77,7 @@ class YandexMetrika
     {
         $this->counter_id = config('yandex-metrika.counter_id');
         $this->token = config('yandex-metrika.token');
+        $this->cache = config('yandex-metrika.cache');
     }
 
     /**

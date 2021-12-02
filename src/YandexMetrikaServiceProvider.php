@@ -1,6 +1,6 @@
 <?php
 
-namespace Alexusmai\YandexMetrika;
+namespace Webjohny\YandexMetrika;
 
 use Illuminate\Support\ServiceProvider;
 

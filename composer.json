@@ -1,8 +1,8 @@
 {
-  "name": "alexusmai/yandex-metrika",
-  "description": "Laravel - Yandex Metrika",
+  "name": "webjohny/yandex-metrika",
+  "description": "Laravel - Yandex Metrika (orig. by alexusami)",
   "keywords": ["laravel", "yandex", "metrika"],
-  "homepage": "https://github.com/alexusami/yandex-metrika",
+  "homepage": "https://github.com/webjohny/yandex-metrika",
   "license": "MIT",
   "authors": [
     {
